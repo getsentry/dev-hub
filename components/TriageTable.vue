@@ -1,58 +1,43 @@
 <script setup lang="ts">
+import { onMounted, ref } from "vue";
+import { type Issue, transformIssueData } from "~/utils/gitHub";
+import { calculateTriageTimeLeft } from "~/utils/triageTime";
+
 const columns = [
-	{
-		key: "title",
-		label: "Title",
-		sortable: true
-	},
-	{
-		key: "triageStatus",
-		label: "Status",
-		sortable: true
-	},
-	{
-		key: "actions",
-		label: "Actions",
-		sortable: false
-	}
+	{ key: "rank", label: "#", sortable: false },
+	{ key: "title", label: "Title", sortable: false },
+	{ key: "timeLeft", label: "Time Left", sortable: false },
+	{ key: "triageStatus", label: "Status", sortable: false },
+	{ key: "actions", label: "Actions", sortable: false }
 ];
 
-const issues = [
-	{
-		title: "Need help with Nuxt",
-		triageStatus: "completed"
-	},
-	{
-		title: "Can you help me with deploying?",
-		triageStatus: "completed"
-	},
-	{
-		title: "Just want to say hello",
-		triageStatus: "inProgress"
-	},
-	{
-		name: "Whitney Francis",
-		title: "Node and Nuxt and Next and Nest are confusing"
-	},
-	{
-		name: "Leonard Krasner",
-		title: "Don't know what is wrong"
-	},
-	{
-		name: "Floyd Miles",
-		title: "Cannot find myself"
-	}
-];
-
-const openInGitHub = () => {
-	alert("Todo: open in GitHub");
+const openInGitHub = (url: string) => {
+	window.open(url, "_blank");
 };
+
+const issues = ref<Issue[]>([]);
+const pending = ref(true);
+
+const loadIssues = async () => {
+	try {
+		const data = await $fetch("api/ghIssues");
+		issues.value = transformIssueData(data);
+	} catch (error) {
+		console.error("Error loading issues:", error);
+	} finally {
+		pending.value = false;
+	}
+};
+
+onMounted(() => {
+	loadIssues();
+});
 </script>
 
 <template>
 	<UContainer>
 		<UCard class="mt-10">
-			<UTable :rows="issues" :columns="columns">
+			<UTable :rows="issues" :columns="columns" :loading="pending">
 				<template #triageStatus-data="{ row }">
 					<UBadge
 						size="xs"
@@ -61,8 +46,14 @@ const openInGitHub = () => {
 						:variant="row.triageStatus === 'completed' ? 'soft' : 'solid'"
 					/>
 				</template>
+
 				<template #actions-data="{ row }">
-					<UButton icon="i-ph:github-logo" size="sm" variant="link" @click="openInGitHub" />
+					<UButton
+						icon="i-ph:github-logo"
+						size="sm"
+						variant="link"
+						@click="() => openInGitHub(row.url)"
+					/>
 				</template>
 			</UTable>
 		</UCard>
