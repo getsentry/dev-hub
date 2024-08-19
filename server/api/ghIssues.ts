@@ -1,5 +1,4 @@
 import { defineEventHandler } from "#imports";
-import { calculateTriageTimeLeft } from "~/utils/triageTime";
 import { useRuntimeConfig } from "#imports";
 
 export default defineEventHandler((event) => {

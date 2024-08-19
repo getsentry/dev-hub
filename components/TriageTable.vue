@@ -8,6 +8,7 @@ const columns = [
 	{ key: "title", label: "Title", sortable: false },
 	{ key: "timeLeft", label: "Time Left", sortable: false },
 	{ key: "triageStatus", label: "Status", sortable: false },
+	{ key: "assignees", label: "Assignees", sortable: false },
 	{ key: "actions", label: "Actions", sortable: false }
 ];
 
@@ -45,6 +46,20 @@ onMounted(() => {
 						:color="row.triageStatus === 'completed' ? 'purple' : 'yellow'"
 						:variant="row.triageStatus === 'completed' ? 'soft' : 'solid'"
 					/>
+				</template>
+
+				<template #assignees-data="{ row }">
+					<div class="flex flex-col items-start justify-start gap-1">
+						<UBadge
+							v-for="assignee in row.assignees"
+							:key="assignee"
+							:label="assignee"
+							size="xs"
+							color="purple"
+							variant="soft"
+							class="grow-0"
+						/>
+					</div>
 				</template>
 
 				<template #actions-data="{ row }">
