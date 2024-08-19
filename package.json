@@ -13,6 +13,7 @@
 		"format": "pnpm exec prettier . --write"
 	},
 	"dependencies": {
+		"@nuxt/ui": "^2.18.4",
 		"nuxt": "^3.12.4"
 	},
 	"devDependencies": {
