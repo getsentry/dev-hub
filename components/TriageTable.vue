@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
-import { type Issue, transformIssueData } from "~/utils/gitHub";
+import { dummyIssues, type Issue, transformIssueData } from "~/utils/gitHub";
 import { calculateTriageTimeLeft } from "~/utils/triageTime";
 
 const columns = [
@@ -22,7 +22,8 @@ const pending = ref(true);
 const loadIssues = async () => {
 	try {
 		const data = await $fetch("api/ghIssues");
-		issues.value = transformIssueData(data);
+		issues.value = transformIssueData([...data, ...dummyIssues]);
+		console.table(issues._rawValue);
 	} catch (error) {
 		console.error("Error loading issues:", error);
 	} finally {
@@ -42,9 +43,9 @@ onMounted(() => {
 				<template #triageStatus-data="{ row }">
 					<UBadge
 						size="xs"
-						:label="row.triageStatus === 'completed' ? 'Completed' : 'In Progress'"
-						:color="row.triageStatus === 'completed' ? 'purple' : 'yellow'"
-						:variant="row.triageStatus === 'completed' ? 'soft' : 'solid'"
+						:label="row.triageStatus === 'needs-triage' ? 'Needs Triage' : 'Waiting'"
+						:color="row.triageStatus === 'needs-triage' ? 'pink' : 'purple'"
+						:variant="row.triageStatus === 'needs-triage' ? 'solid' : 'soft'"
 					/>
 				</template>
 
