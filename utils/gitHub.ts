@@ -1,24 +1,52 @@
 import { useRuntimeConfig } from "#imports";
 import { calculateTriageTimeLeft } from "./triageTime";
 
+export type User = {
+	username: string;
+	avatarUrl: string;
+};
+
 export type Issue = {
 	title: string;
 	state: string;
 	url: string;
+	commentsUrl: string;
 	labels: string[];
-	assignees: string[];
+	assignees: User[];
 	updatedAt: Date;
 	timeLeft: Date;
 	triageStatus: "needs-triage" | "waiting" | "no-status";
 };
 
+export type Comment = {
+	htmlUrl: string;
+	issueUrl: string;
+	user: User;
+	createdAt: Date;
+	body: string;
+};
+
+export type GitHubUser = {
+	login: string;
+	avatar_url: string;
+};
+
 export type GitHubIssue = {
 	title: string;
 	url: string;
+	comments_url: string;
 	labels: { name: string };
 	updated_at: string;
 	// `login` is the GitHub username
-	assignees: { login: string }[];
+	assignees: GitHubUser[];
+};
+
+export type GitHubComment = {
+	html_url: string;
+	issue_url: string;
+	user: GitHubUser;
+	created_at: string;
+	body: string;
 };
 
 export const transformIssueData = (gitHubIssues: GitHubIssue[]): Issue => {
@@ -36,8 +64,13 @@ export const transformIssueData = (gitHubIssues: GitHubIssue[]): Issue => {
 			title: issue.title,
 			state: issue.state,
 			url: issue.html_url,
+			commentsUrl: issue.comments_url,
 			labels: issue.labels.map((label: any) => label.name),
-			assignees: issue.assignees?.map((assignee: any) => assignee.login),
+			assignees:
+				issue.assignees?.map((assignee: any) => ({
+					username: assignee.login,
+					avatarUrl: assignee.avatar_url
+				})) || [],
 			updatedAt: new Date(issue.updated_at),
 			timeLeft: calculateTriageTimeLeft(new Date(issue.updated_at)),
 			triageStatus: issue.labels.some((label) => label.name === waitingForOwnerTag)
@@ -46,6 +79,19 @@ export const transformIssueData = (gitHubIssues: GitHubIssue[]): Issue => {
 					? "waiting"
 					: "no-status"
 		}));
+};
+
+export const transformCommentData = (gitHubComments: GitHubComment[]): Comment[] => {
+	return gitHubComments.map((comment: GitHubComment) => ({
+		htmlUrl: comment.html_url,
+		issueUrl: comment.issue_url,
+		user: {
+			username: comment.user.login,
+			avatarUrl: comment.user.avatar_url
+		},
+		createdAt: new Date(comment.created_at),
+		body: comment.body
+	}));
 };
 
 const now = new Date();

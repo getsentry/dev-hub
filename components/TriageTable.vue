@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
-import { dummyIssues, type Issue, transformIssueData } from "~/utils/gitHub";
+import { dummyIssues, type Issue, transformCommentData, transformIssueData } from "~/utils/gitHub";
 import { calculateTriageTimeLeft } from "~/utils/triageTime";
+import { useFetch } from "#imports";
+import { computed } from "vue";
 
 const columns = [
 	{ key: "rank", label: "#", sortable: false },
@@ -17,32 +19,51 @@ const openInGitHub = (url: string) => {
 };
 
 const issues = ref<Issue[]>([]);
-const pending = ref(true);
+const issuesPending = ref(true);
+
+const commentsMap = ref<Map<number, Comment[]>>(new Map());
+const commentsPending = ref(true);
 
 const loadIssues = async () => {
 	try {
 		const data = await $fetch("api/ghIssues");
 		issues.value = transformIssueData([...data, ...dummyIssues]);
-		console.table(issues._rawValue);
 	} catch (error) {
 		console.error("Error loading issues:", error);
 	} finally {
-		pending.value = false;
+		issuesPending.value = false;
 	}
 };
 
 onMounted(() => {
 	loadIssues();
 });
+
+const loadComments = async (rank: number, commentsUrl: string) => {
+	try {
+		commentsPending.value = true;
+		const data = await $fetch(commentsUrl);
+		commentsMap.value.set(rank, transformCommentData(data));
+	} catch (error) {
+		console.error("Error loading comments:", error);
+	} finally {
+		commentsPending.value = false;
+	}
+};
+
+const getCommentsForRow = (rank: number) => {
+	return computed(() => commentsMap.value.get(rank) || []);
+};
 </script>
 
 <template>
 	<UContainer>
 		<UCard class="mt-10">
-			<UTable :rows="issues" :columns="columns" :loading="pending">
+			<UTable :rows="issues" :columns="columns" :loading="issuesPending">
 				<template #triageStatus-data="{ row }">
 					<UBadge
 						size="xs"
+						class="whitespace-nowrap"
 						:label="row.triageStatus === 'needs-triage' ? 'Needs Triage' : 'Waiting'"
 						:color="row.triageStatus === 'needs-triage' ? 'pink' : 'purple'"
 						:variant="row.triageStatus === 'needs-triage' ? 'solid' : 'soft'"
@@ -53,12 +74,12 @@ onMounted(() => {
 					<div class="flex flex-col items-start justify-start gap-1">
 						<UBadge
 							v-for="assignee in row.assignees"
-							:key="assignee"
-							:label="assignee"
+							:key="assignee.username"
+							:label="assignee.username"
 							size="xs"
 							color="purple"
 							variant="soft"
-							class="grow-0"
+							class="grow-0 whitespace-nowrap"
 						/>
 					</div>
 				</template>
@@ -69,7 +90,28 @@ onMounted(() => {
 						size="sm"
 						variant="link"
 						@click="() => openInGitHub(row.url)"
-					/>
+						>Open</UButton
+					>
+				</template>
+
+				<template #expand="{ row }">
+					<div class="p-4">
+						<UButton
+							v-if="!getCommentsForRow(row.rank).value.length"
+							@click="() => loadComments(row.rank, row.commentsUrl)"
+							>Load Comments</UButton
+						>
+
+						<UCard v-for="comment in getCommentsForRow(row.rank).value" class="mt-3">
+							<template #header>
+								<div class="flex gap-3">
+									<UAvatar :src="comment.user.avatarUrl" alt="Avatar" />
+									<p class="font-semibold">{{ comment.user.username }}</p>
+								</div>
+							</template>
+							<MarkdownRenderer :source="comment.body" />
+						</UCard>
+					</div>
 				</template>
 			</UTable>
 		</UCard>

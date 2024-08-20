@@ -1,5 +1,4 @@
-import { defineEventHandler } from "#imports";
-import { useRuntimeConfig } from "#imports";
+import { defineEventHandler, useRuntimeConfig } from "#imports";
 
 export default defineEventHandler((event) => {
 	try {
