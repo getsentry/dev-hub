@@ -10,6 +10,6 @@ export default defineNuxtConfig({
 		// server-side
 		gitHubToken: process.env.GITHUB_TOKEN,
 		// client-side
-		public: {}
+		public: { gitHubToken: process.env.GITHUB_TOKEN }
 	}
 });

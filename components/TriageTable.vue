@@ -1,8 +1,15 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
-import { dummyIssues, type Issue, transformCommentData, transformIssueData } from "~/utils/gitHub";
+import {
+	dummyIssues,
+	type Issue,
+	type User,
+	transformCommentData,
+	transformIssueData,
+	extractTriageParticipants
+} from "~/utils/gitHub";
 import { calculateTriageTimeLeft } from "~/utils/triageTime";
-import { useFetch } from "#imports";
+import { useFetch, useRuntimeConfig } from "#imports";
 import { computed } from "vue";
 
 const columns = [
@@ -10,6 +17,7 @@ const columns = [
 	{ key: "title", label: "Title", sortable: false },
 	{ key: "timeLeft", label: "Time Left", sortable: false },
 	{ key: "triageStatus", label: "Status", sortable: false },
+	{ key: "answeredBy", label: "Answered By", sortable: false },
 	{ key: "assignees", label: "Assignees", sortable: false },
 	{ key: "actions", label: "Actions", sortable: false }
 ];
@@ -21,10 +29,12 @@ const openInGitHub = (url: string) => {
 const issues = ref<Issue[]>([]);
 const issuesPending = ref(true);
 
-const commentsMap = ref<Map<number, Comment[]>>(new Map());
+const commentsMap = ref<
+	Map<number, { loaded: boolean; participants: User[]; comments: Comment[] | null }>
+>(new Map());
 const commentsPending = ref(true);
 
-const loadIssues = async () => {
+const loadIssuesWithComments = async () => {
 	try {
 		const data = await $fetch("api/ghIssues");
 		issues.value = transformIssueData([...data, ...dummyIssues]);
@@ -32,18 +42,42 @@ const loadIssues = async () => {
 		console.error("Error loading issues:", error);
 	} finally {
 		issuesPending.value = false;
+
+		issues.value.forEach((issue) => {
+			loadComments(issue.rank, issue.commentsUrl);
+		});
 	}
 };
 
 onMounted(() => {
-	loadIssues();
+	loadIssuesWithComments();
 });
 
 const loadComments = async (rank: number, commentsUrl: string) => {
 	try {
 		commentsPending.value = true;
-		const data = await $fetch(commentsUrl);
-		commentsMap.value.set(rank, transformCommentData(data));
+
+		if (issuesPending.value === false) {
+			const config = useRuntimeConfig();
+			const data = await $fetch(commentsUrl, {
+				method: "GET",
+				headers: {
+					Accept: "application/vnd.github+json",
+					"X-GitHub-Api-Version": "2022-11-28",
+					Authorization: `Bearer ${config.public.gitHubToken}`,
+					"Content-Type": "application/json"
+				}
+			});
+
+			const transformedComments = transformCommentData(data);
+			commentsMap.value.set(rank, {
+				loaded: true,
+				comments: transformedComments.length > 0 ? transformedComments : null,
+				triageParticipants: transformedComments
+					? extractTriageParticipants(transformedComments)
+					: []
+			});
+		}
 	} catch (error) {
 		console.error("Error loading comments:", error);
 	} finally {
@@ -51,8 +85,8 @@ const loadComments = async (rank: number, commentsUrl: string) => {
 	}
 };
 
-const getCommentsForRow = (rank: number) => {
-	return computed(() => commentsMap.value.get(rank) || []);
+const getCommentsDataForRow = (rank: number) => {
+	return computed(() => commentsMap.value.get(rank) ?? { loaded: false });
 };
 </script>
 
@@ -84,6 +118,16 @@ const getCommentsForRow = (rank: number) => {
 					</div>
 				</template>
 
+				<template #answeredBy-data="{ row }">
+					<div class="flex items-start justify-start gap-1">
+						<UAvatar
+							v-for="participant in getCommentsDataForRow(row.rank).value.triageParticipants"
+							:src="participant.avatarUrl"
+							:alt="participant.username"
+						/>
+					</div>
+				</template>
+
 				<template #actions-data="{ row }">
 					<UButton
 						icon="i-ph:github-logo"
@@ -95,17 +139,30 @@ const getCommentsForRow = (rank: number) => {
 				</template>
 
 				<template #expand="{ row }">
-					<div class="p-4">
-						<UButton
-							v-if="!getCommentsForRow(row.rank).value.length"
-							@click="() => loadComments(row.rank, row.commentsUrl)"
-							>Load Comments</UButton
+					<div class="pt-4">
+						<p v-if="getCommentsDataForRow(row.rank).value.loaded === false" ]]>
+							Loading comments...
+						</p>
+						<p
+							v-else-if="
+								getCommentsDataForRow(row.rank).value.loaded === true &&
+								getCommentsDataForRow(row.rank).value.comments === null
+							"
+							class="font-light text-slate-500 mb-3 ml-3"
 						>
+							No Comments
+						</p>
 
-						<UCard v-for="comment in getCommentsForRow(row.rank).value" class="mt-3">
+						<h2
+							v-if="getCommentsDataForRow(row.rank).value.comments"
+							class="text-lg font-semibold ml-3"
+						>
+							Comments
+						</h2>
+						<UCard v-for="comment in getCommentsDataForRow(row.rank).value.comments" class="m-3">
 							<template #header>
 								<div class="flex gap-3">
-									<UAvatar :src="comment.user.avatarUrl" alt="Avatar" />
+									<UAvatar :src="comment.user.avatarUrl" :alt="comment.user.username" />
 									<p class="font-semibold">{{ comment.user.username }}</p>
 								</div>
 							</template>

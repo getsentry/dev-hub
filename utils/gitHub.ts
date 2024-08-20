@@ -24,6 +24,7 @@ export type Comment = {
 	user: User;
 	createdAt: Date;
 	body: string;
+	authorIsTriager: boolean;
 };
 
 export type GitHubUser = {
@@ -44,9 +45,17 @@ export type GitHubIssue = {
 export type GitHubComment = {
 	html_url: string;
 	issue_url: string;
-	user: GitHubUser;
 	created_at: string;
 	body: string;
+	user: GitHubUser;
+	author_association:
+		| "OWNER"
+		| "MEMBER"
+		| "CONTRIBUTOR"
+		| "COLLABORATOR"
+		| "FIRST_TIME_CONTRIBUTOR"
+		| "FIRST_TIMER"
+		| "NONE";
 };
 
 export const transformIssueData = (gitHubIssues: GitHubIssue[]): Issue => {
@@ -90,8 +99,23 @@ export const transformCommentData = (gitHubComments: GitHubComment[]): Comment[]
 			avatarUrl: comment.user.avatar_url
 		},
 		createdAt: new Date(comment.created_at),
-		body: comment.body
+		body: comment.body,
+		authorIsTriager:
+			comment.author_association === "MEMBER" || comment.author_association === "OWNER"
 	}));
+};
+
+export const extractTriageParticipants = (comments: Comment[]): User[] => {
+	const participants = new Set<User>();
+
+	comments.forEach((comment) => {
+		console.log("comment", comment);
+		if (comment.authorIsTriager) {
+			participants.add(comment.user);
+		}
+	});
+
+	return Array.from(participants);
 };
 
 const now = new Date();
