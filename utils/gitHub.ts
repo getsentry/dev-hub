@@ -109,7 +109,6 @@ export const extractTriageParticipants = (comments: Comment[]): User[] => {
 	const participants = new Set<User>();
 
 	comments.forEach((comment) => {
-		console.log("comment", comment);
 		if (comment.authorIsTriager) {
 			participants.add(comment.user);
 		}
