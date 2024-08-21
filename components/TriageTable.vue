@@ -91,86 +91,84 @@ const getCommentsDataForRow = (rank: number) => {
 </script>
 
 <template>
-	<UContainer>
-		<UCard class="mt-10">
-			<UTable :rows="issues" :columns="columns" :loading="issuesPending">
-				<template #triageStatus-data="{ row }">
+	<UCard class="mt-10 mb-10">
+		<UTable :rows="issues" :columns="columns" :loading="issuesPending">
+			<template #triageStatus-data="{ row }">
+				<UBadge
+					size="xs"
+					class="whitespace-nowrap"
+					:label="row.triageStatus === 'needs-triage' ? 'Needs Triage' : 'Waiting'"
+					:color="row.triageStatus === 'needs-triage' ? 'pink' : 'purple'"
+					:variant="row.triageStatus === 'needs-triage' ? 'solid' : 'soft'"
+				/>
+			</template>
+
+			<template #assignees-data="{ row }">
+				<div class="flex flex-col items-start justify-start gap-1">
 					<UBadge
+						v-for="assignee in row.assignees"
+						:key="assignee.username"
+						:label="assignee.username"
 						size="xs"
-						class="whitespace-nowrap"
-						:label="row.triageStatus === 'needs-triage' ? 'Needs Triage' : 'Waiting'"
-						:color="row.triageStatus === 'needs-triage' ? 'pink' : 'purple'"
-						:variant="row.triageStatus === 'needs-triage' ? 'solid' : 'soft'"
+						color="purple"
+						variant="soft"
+						class="grow-0 whitespace-nowrap"
 					/>
-				</template>
+				</div>
+			</template>
 
-				<template #assignees-data="{ row }">
-					<div class="flex flex-col items-start justify-start gap-1">
-						<UBadge
-							v-for="assignee in row.assignees"
-							:key="assignee.username"
-							:label="assignee.username"
-							size="xs"
-							color="purple"
-							variant="soft"
-							class="grow-0 whitespace-nowrap"
-						/>
-					</div>
-				</template>
+			<template #answeredBy-data="{ row }">
+				<div class="flex items-start justify-start gap-1">
+					<UAvatar
+						v-for="participant in getCommentsDataForRow(row.rank).value.triageParticipants"
+						:src="participant.avatarUrl"
+						:alt="participant.username"
+					/>
+				</div>
+			</template>
 
-				<template #answeredBy-data="{ row }">
-					<div class="flex items-start justify-start gap-1">
-						<UAvatar
-							v-for="participant in getCommentsDataForRow(row.rank).value.triageParticipants"
-							:src="participant.avatarUrl"
-							:alt="participant.username"
-						/>
-					</div>
-				</template>
+			<template #actions-data="{ row }">
+				<UButton
+					icon="i-ph:github-logo"
+					size="sm"
+					variant="link"
+					@click="() => openInGitHub(row.url)"
+					>Open</UButton
+				>
+			</template>
 
-				<template #actions-data="{ row }">
-					<UButton
-						icon="i-ph:github-logo"
-						size="sm"
-						variant="link"
-						@click="() => openInGitHub(row.url)"
-						>Open</UButton
+			<template #expand="{ row }">
+				<div class="pt-4">
+					<p v-if="getCommentsDataForRow(row.rank).value.loaded === false" ]]>
+						Loading comments...
+					</p>
+					<p
+						v-else-if="
+							getCommentsDataForRow(row.rank).value.loaded === true &&
+							getCommentsDataForRow(row.rank).value.comments === null
+						"
+						class="font-light text-slate-500 mb-3 ml-3"
 					>
-				</template>
+						No Comments
+					</p>
 
-				<template #expand="{ row }">
-					<div class="pt-4">
-						<p v-if="getCommentsDataForRow(row.rank).value.loaded === false" ]]>
-							Loading comments...
-						</p>
-						<p
-							v-else-if="
-								getCommentsDataForRow(row.rank).value.loaded === true &&
-								getCommentsDataForRow(row.rank).value.comments === null
-							"
-							class="font-light text-slate-500 mb-3 ml-3"
-						>
-							No Comments
-						</p>
-
-						<h2
-							v-if="getCommentsDataForRow(row.rank).value.comments"
-							class="text-lg font-semibold ml-3"
-						>
-							Comments
-						</h2>
-						<UCard v-for="comment in getCommentsDataForRow(row.rank).value.comments" class="m-3">
-							<template #header>
-								<div class="flex gap-3">
-									<UAvatar :src="comment.user.avatarUrl" :alt="comment.user.username" />
-									<p class="font-semibold">{{ comment.user.username }}</p>
-								</div>
-							</template>
-							<MarkdownRenderer :source="comment.body" />
-						</UCard>
-					</div>
-				</template>
-			</UTable>
-		</UCard>
-	</UContainer>
+					<h2
+						v-if="getCommentsDataForRow(row.rank).value.comments"
+						class="text-lg font-semibold ml-3"
+					>
+						Comments
+					</h2>
+					<UCard v-for="comment in getCommentsDataForRow(row.rank).value.comments" class="m-3">
+						<template #header>
+							<div class="flex gap-3">
+								<UAvatar :src="comment.user.avatarUrl" :alt="comment.user.username" />
+								<p class="font-semibold">{{ comment.user.username }}</p>
+							</div>
+						</template>
+						<MarkdownRenderer :source="comment.body" />
+					</UCard>
+				</div>
+			</template>
+		</UTable>
+	</UCard>
 </template>

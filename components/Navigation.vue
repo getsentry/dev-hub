@@ -15,8 +15,8 @@ const { data: gitHubUser } = await useFetch("https://api.github.com/user", {
 
 const links = [
 	{
-		label: gitHubUser.value.login,
-		avatar: { src: gitHubUser.value.avatar_url }
+		label: gitHubUser?.value?.login ?? "Not logged in",
+		avatar: { src: gitHubUser?.value?.avatar_url }
 	},
 	{
 		label: "Triaging",
