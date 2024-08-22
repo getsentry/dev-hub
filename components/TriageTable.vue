@@ -120,9 +120,12 @@ const getCommentsDataForRow = (rank: number) => {
 			<template #answeredBy-data="{ row }">
 				<div class="flex items-start justify-start gap-1">
 					<UAvatar
-						v-for="participant in getCommentsDataForRow(row.rank).value.triageParticipants"
+						v-for="(participant, index) in getCommentsDataForRow(row.rank).value.triageParticipants"
+						:key="participant.username"
+						:title="participant.username"
 						:src="participant.avatarUrl"
 						:alt="participant.username"
+						:style="{ transform: `translateX(-${index * 10}px)` }"
 					/>
 				</div>
 			</template>

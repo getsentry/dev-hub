@@ -106,15 +106,14 @@ export const transformCommentData = (gitHubComments: GitHubComment[]): Comment[]
 };
 
 export const extractTriageParticipants = (comments: Comment[]): User[] => {
-	const participants = new Set<User>();
-
-	comments.forEach((comment) => {
-		if (comment.authorIsTriager) {
-			participants.add(comment.user);
+	const participants = comments.reduce((acc, comment) => {
+		if (comment.authorIsTriager && !acc.has(comment.user.username)) {
+			acc.set(comment.user.username, comment.user);
 		}
-	});
+		return acc;
+	}, new Map<string, User>());
 
-	return Array.from(participants);
+	return Array.from(participants.values());
 };
 
 const now = new Date();
