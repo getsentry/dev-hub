@@ -11,6 +11,7 @@ import {
 import { calculateTriageTime } from "~/utils/triageTime";
 import { useFetch, useRuntimeConfig } from "#imports";
 import { computed } from "vue";
+import { format } from "date-fns";
 
 const columns = [
 	{ key: "rank", label: "#", sortable: false },
@@ -166,6 +167,7 @@ const getCommentsDataForRow = (rank: number) => {
 							<div class="flex gap-3">
 								<UAvatar :src="comment.user.avatarUrl" :alt="comment.user.username" />
 								<p class="font-semibold">{{ comment.user.username }}</p>
+								<p class="text-slate-500">{{ format(comment.createdAt, "MMM dd, HH:mm") }}</p>
 							</div>
 						</template>
 						<MarkdownRenderer :source="comment.body" />

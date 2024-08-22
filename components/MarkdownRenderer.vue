@@ -16,9 +16,10 @@ const markdown = markdownit({
 			} catch (__) {}
 		}
 
+		// Default to 'javascript'
 		return (
 			'<pre class="border border-gray-300 rounded-md p-4 my-2"><code class="hljs text-sm"">' +
-			md.utils.escapeHtml(str) +
+			hljs.highlight(str, { language: "javascript", ignoreIllegals: true }).value +
 			"</code></pre>"
 		);
 	}
