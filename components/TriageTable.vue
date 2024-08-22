@@ -8,7 +8,7 @@ import {
 	transformIssueData,
 	extractTriageParticipants
 } from "~/utils/gitHub";
-import { calculateTriageTimeLeft } from "~/utils/triageTime";
+import { calculateTriageTime } from "~/utils/triageTime";
 import { useFetch, useRuntimeConfig } from "#imports";
 import { computed } from "vue";
 

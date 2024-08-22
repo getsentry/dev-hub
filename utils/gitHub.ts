@@ -1,5 +1,5 @@
 import { useRuntimeConfig } from "#imports";
-import { calculateTriageTimeLeft } from "./triageTime";
+import { calculateTriageTime } from "./triageTime";
 
 export type User = {
 	username: string;
@@ -81,7 +81,7 @@ export const transformIssueData = (gitHubIssues: GitHubIssue[]): Issue => {
 					avatarUrl: assignee.avatar_url
 				})) || [],
 			updatedAt: new Date(issue.updated_at),
-			timeLeft: calculateTriageTimeLeft(new Date(issue.updated_at)),
+			timeLeft: calculateTriageTime(new Date(issue.updated_at)),
 			triageStatus: issue.labels.some((label) => label.name === waitingForOwnerTag)
 				? "needs-triage"
 				: issue.labels.some((label) => label.name === waitingForCommunityTag)

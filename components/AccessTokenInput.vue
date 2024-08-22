@@ -40,7 +40,7 @@ const onSubmit = async (event: FormSubmitEvent) => {
 			Select "getsentry" in "Resource Owner" and define the repositories you want to have access to.
 		</p>
 
-		<UForm :schema="schema" :state="state" class="space-y-4 mt-5" @submit="onSubmit">
+		<UForm :state="state" class="space-y-4 mt-5" @submit="onSubmit">
 			<UFormGroup label="Personal Access Token">
 				<UInput v-model="state.accessToken" placeholder="github_pat_11AH3AY..." icon="i-ph:key" />
 			</UFormGroup>
