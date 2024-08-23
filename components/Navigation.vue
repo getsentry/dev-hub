@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { type GitHubUser, useFetch, useRuntimeConfig } from "#imports";
-
-const config = useRuntimeConfig();
+import { useFetch } from "#imports";
+import { getGitHubToken } from "~/utils/tokenStorage";
 
 const { data: gitHubUser } = await useFetch("https://api.github.com/user", {
 	method: "GET",
 	headers: {
 		Accept: "application/vnd.github+json",
 		"X-GitHub-Api-Version": "2022-11-28",
-		Authorization: `Bearer ${config.public.gitHubToken}`,
+		Authorization: `Bearer ${getGitHubToken()}`,
 		"Content-Type": "application/json"
-	}
+	},
+	server: false
 });
 
 const links = [

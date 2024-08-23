@@ -11,9 +11,9 @@ import {
 	LABEL_POST_HACKWEEK,
 	type GitHubIssue
 } from "~/utils/gitHub";
-import { useRuntimeConfig } from "#imports";
 import { computed } from "vue";
 import { format } from "date-fns";
+import { getGitHubToken } from "~/utils/tokenStorage";
 
 const columns = [
 	{ key: "rank", label: "#", sortable: false },
@@ -38,15 +38,15 @@ const commentsMap = ref<
 const commentsPending = ref(true);
 
 const loadIssuesWithComments = async (status: string) => {
-	console.log("status", status);
-
 	const labelQuery =
 		status === "needs-triage"
 			? LABEL_WAITING_FOR_OWNER
 			: `${LABEL_POST_HACKWEEK},${LABEL_WAITING_FOR_OWNER},${LABEL_WAITING_FOR_COMMUNITY}`;
 
 	try {
-		const data: GitHubIssue[] = await $fetch(`api/ghIssues?labels=${labelQuery}`);
+		const data: GitHubIssue[] = await $fetch(
+			`api/ghIssues?labels=${labelQuery}&token=${getGitHubToken()}`
+		);
 		issues.value = transformIssueData(data);
 	} catch (error) {
 		console.error("Error loading issues:", error);
@@ -64,15 +64,15 @@ const loadComments = async (rank: number, commentsUrl: string) => {
 		commentsPending.value = true;
 
 		if (issuesPending.value === false) {
-			const config = useRuntimeConfig();
 			const data = await $fetch(commentsUrl, {
 				method: "GET",
 				headers: {
 					Accept: "application/vnd.github+json",
 					"X-GitHub-Api-Version": "2022-11-28",
-					Authorization: `Bearer ${config.public.gitHubToken}`,
+					Authorization: `Bearer ${getGitHubToken()}`,
 					"Content-Type": "application/json"
-				}
+				},
+				server: false
 			});
 
 			const transformedComments = transformCommentData(data);

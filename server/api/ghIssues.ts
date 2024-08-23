@@ -1,10 +1,8 @@
-import { defineEventHandler, getQuery, useRuntimeConfig } from "#imports";
+import { defineEventHandler, getQuery } from "#imports";
 
 export default defineEventHandler(async (event) => {
 	try {
-		const config = useRuntimeConfig();
-
-		const { labels }: { labels?: string } = { ...getQuery(event) };
+		const { labels, token }: { labels?: string; token: string } = { ...getQuery(event) };
 
 		const owner = "getsentry";
 		const repo = "sentry-javascript";
@@ -23,7 +21,7 @@ export default defineEventHandler(async (event) => {
 						headers: {
 							Accept: "application/vnd.github+json",
 							"X-GitHub-Api-Version": "2022-11-28",
-							Authorization: `Bearer ${config.gitHubToken}`,
+							Authorization: `Bearer ${token}`,
 							"Content-Type": "application/json"
 						}
 					}
