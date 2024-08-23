@@ -6,7 +6,7 @@ const { gitHubUser } = useGitHubUser();
 
 const links = computed(() => [
 	{
-		label: gitHubUser.value?.login ?? "Not logged in",
+		label: gitHubUser.value?.login ?? "Add GitHub token",
 		avatar: { src: gitHubUser.value?.avatar_url },
 		to: "/userSettings"
 	},
