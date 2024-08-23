@@ -1,11 +1,14 @@
+// components/AccessTokenInput.vue
 <script setup lang="ts">
 import { reactive } from "#imports";
 import type { FormSubmitEvent } from "#ui/types";
-import { setGitHubToken } from "~/utils/tokenStorage";
+import { useGitHubUser } from "~/composables/useGitHubUser";
 
 const state = reactive({
 	accessToken: undefined
 });
+
+const { setGitHubToken } = useGitHubUser();
 
 const onSubmit = async (event: FormSubmitEvent) => {
 	setGitHubToken(event.data.accessToken);

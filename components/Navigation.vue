@@ -1,34 +1,21 @@
 <script setup lang="ts">
-import { useFetch } from "#imports";
-import { getGitHubToken } from "~/utils/tokenStorage";
+import { computed } from "vue";
+import { useGitHubUser } from "~/composables/useGitHubUser";
 
-const { data: gitHubUser } = await useFetch("https://api.github.com/user", {
-	method: "GET",
-	headers: {
-		Accept: "application/vnd.github+json",
-		"X-GitHub-Api-Version": "2022-11-28",
-		Authorization: `Bearer ${getGitHubToken()}`,
-		"Content-Type": "application/json"
-	},
-	server: false
-});
+const { gitHubUser } = useGitHubUser();
 
-const links = [
+const links = computed(() => [
 	{
-		label: gitHubUser?.value?.login ?? "Not logged in",
-		avatar: { src: gitHubUser?.value?.avatar_url }
+		label: gitHubUser.value?.login ?? "Not logged in",
+		avatar: { src: gitHubUser.value?.avatar_url },
+		to: "/userSettings"
 	},
 	{
 		label: "Triaging",
 		icon: "i-ph:list-checks-bold",
 		to: "/triaging"
-	},
-	{
-		label: "Settings",
-		icon: "i-ph:gear-six",
-		to: "/settings"
 	}
-];
+]);
 </script>
 
 <template>
