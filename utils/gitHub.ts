@@ -1,4 +1,3 @@
-import { useRuntimeConfig } from "#imports";
 import { calculateTriageTime } from "./triageTime";
 
 export type User = {
@@ -7,6 +6,7 @@ export type User = {
 };
 
 export type Issue = {
+	rank: number;
 	title: string;
 	state: string;
 	url: string;
@@ -14,7 +14,7 @@ export type Issue = {
 	labels: string[];
 	assignees: User[];
 	updatedAt: Date;
-	timeLeft: Date;
+	timeLeft: string;
 	triageStatus: "needs-triage" | "waiting" | "no-status";
 };
 
@@ -35,8 +35,10 @@ export type GitHubUser = {
 export type GitHubIssue = {
 	title: string;
 	url: string;
+	html_url: string;
+	state: "open" | "closed" | "all";
 	comments_url: string;
-	labels: { name: string };
+	labels: { name: string }[];
 	updated_at: string;
 	// `login` is the GitHub username
 	assignees: GitHubUser[];
@@ -58,12 +60,16 @@ export type GitHubComment = {
 		| "NONE";
 };
 
-export const transformIssueData = (gitHubIssues: GitHubIssue[]): Issue => {
-	const waitingForCommunityTag = "Waiting for: Community";
-	const waitingForOwnerTag = "Waiting for: Product Owner";
-	const postHackweek = "Post Hackweek";
+export const LABEL_WAITING_FOR_COMMUNITY = "Waiting for: Community";
+export const LABEL_WAITING_FOR_OWNER = "Waiting for: Product Owner";
+export const LABEL_POST_HACKWEEK = "Post Hackweek";
 
-	const includedTags = new Set([waitingForCommunityTag, waitingForOwnerTag, postHackweek]);
+export const transformIssueData = (gitHubIssues: GitHubIssue[]): Issue[] => {
+	const includedTags = new Set([
+		LABEL_WAITING_FOR_COMMUNITY,
+		LABEL_WAITING_FOR_OWNER,
+		LABEL_POST_HACKWEEK
+	]);
 
 	return gitHubIssues
 		.filter((issue) => issue.labels.some((label) => includedTags.has(label.name)))
@@ -74,7 +80,7 @@ export const transformIssueData = (gitHubIssues: GitHubIssue[]): Issue => {
 			state: issue.state,
 			url: issue.html_url,
 			commentsUrl: issue.comments_url,
-			labels: issue.labels.map((label: any) => label.name),
+			labels: issue.labels?.map((label: any) => label.name) || [],
 			assignees:
 				issue.assignees?.map((assignee: any) => ({
 					username: assignee.login,
@@ -82,9 +88,9 @@ export const transformIssueData = (gitHubIssues: GitHubIssue[]): Issue => {
 				})) || [],
 			updatedAt: new Date(issue.updated_at),
 			timeLeft: calculateTriageTime(new Date(issue.updated_at)),
-			triageStatus: issue.labels.some((label) => label.name === waitingForOwnerTag)
+			triageStatus: issue.labels.some((label) => label.name === LABEL_WAITING_FOR_OWNER)
 				? "needs-triage"
-				: issue.labels.some((label) => label.name === waitingForCommunityTag)
+				: issue.labels.some((label) => label.name === LABEL_WAITING_FOR_COMMUNITY)
 					? "waiting"
 					: "no-status"
 		}));

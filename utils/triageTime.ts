@@ -1,7 +1,6 @@
 import {
 	addHours,
 	addDays,
-	format,
 	getDay,
 	isAfter,
 	isBefore,
@@ -11,7 +10,7 @@ import {
 	getMinutes,
 	getHours
 } from "date-fns";
-import { toZonedTime, formatInTimeZone } from "date-fns-tz";
+import { toZonedTime, format } from "date-fns-tz";
 
 export const TIMEZONE_VIE = "Europe/Vienna";
 const BUSINESS_START_HOUR = 9;
