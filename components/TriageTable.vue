@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "#imports";
 import {
-	dummyIssues,
 	type Issue,
 	type User,
 	transformCommentData,
 	transformIssueData,
-	extractTriageParticipants
+	extractTriageParticipants,
+	LABEL_WAITING_FOR_COMMUNITY,
+	LABEL_WAITING_FOR_OWNER,
+	LABEL_POST_HACKWEEK,
+	type GitHubIssue
 } from "~/utils/gitHub";
-import { calculateTriageTime } from "~/utils/triageTime";
-import { useFetch, useRuntimeConfig } from "#imports";
+import { useRuntimeConfig } from "#imports";
 import { computed } from "vue";
 import { format } from "date-fns";
 
@@ -35,10 +37,17 @@ const commentsMap = ref<
 >(new Map());
 const commentsPending = ref(true);
 
-const loadIssuesWithComments = async () => {
+const loadIssuesWithComments = async (status: string) => {
+	console.log("status", status);
+
+	const labelQuery =
+		status === "needs-triage"
+			? LABEL_WAITING_FOR_OWNER
+			: `${LABEL_POST_HACKWEEK},${LABEL_WAITING_FOR_OWNER},${LABEL_WAITING_FOR_COMMUNITY}`;
+
 	try {
-		const data = await $fetch("api/ghIssues");
-		issues.value = transformIssueData([...data, ...dummyIssues]);
+		const data: GitHubIssue[] = await $fetch(`api/ghIssues?labels=${labelQuery}`);
+		issues.value = transformIssueData(data);
 	} catch (error) {
 		console.error("Error loading issues:", error);
 	} finally {
@@ -49,10 +58,6 @@ const loadIssuesWithComments = async () => {
 		});
 	}
 };
-
-onMounted(() => {
-	loadIssuesWithComments();
-});
 
 const loadComments = async (rank: number, commentsUrl: string) => {
 	try {
@@ -86,14 +91,51 @@ const loadComments = async (rank: number, commentsUrl: string) => {
 	}
 };
 
+// Filters
+const triageStatus: { key: Issue["triageStatus"] | "all"; label: string; value: boolean } = [
+	{
+		key: "all",
+		label: "All"
+	},
+	{
+		key: "needs-triage",
+		label: "Needs Triage"
+	}
+];
+
+const selectedTriageStatus = ref(triageStatus[0]);
+
 const getCommentsDataForRow = (rank: number) => {
 	return computed(() => commentsMap.value.get(rank) ?? { loaded: false });
 };
+
+onMounted(() => {
+	loadIssuesWithComments(selectedTriageStatus.value.key);
+});
+
+watch(selectedTriageStatus, (newStatus) => {
+	issuesPending.value = true;
+	loadIssuesWithComments(newStatus.key);
+});
 </script>
 
 <template>
 	<UCard class="mt-10 mb-10">
+		<!-- Filters -->
+		<div class="flex items-center justify-between gap-3 px-4 py-3">
+			<USelectMenu
+				v-model="selectedTriageStatus"
+				:options="triageStatus"
+				placeholder="Status"
+				class="w-40"
+			/>
+		</div>
+
 		<UTable :rows="issues" :columns="columns" :loading="issuesPending">
+			<template #timeLeft-data="{ row }">
+				<span size="xs" class="whitespace-nowrap">{{ row.timeLeft }}</span>
+			</template>
+
 			<template #triageStatus-data="{ row }">
 				<UBadge
 					size="xs"
