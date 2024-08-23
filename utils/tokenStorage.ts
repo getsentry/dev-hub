@@ -1,5 +1,3 @@
-import { useRuntimeConfig } from "#imports";
-
 const TOKEN_KEY = "access-token";
 
 export const getGitHubToken = () => {
@@ -8,10 +6,9 @@ export const getGitHubToken = () => {
 
 		if (localToken) {
 			return localToken;
-		} else {
-			const config = useRuntimeConfig();
-			return config.gitHubToken;
 		}
+
+		return "";
 	}
 };
 
