@@ -140,7 +140,15 @@ watch(selectedTriageStatus, (newStatus) => {
 				<UBadge
 					size="xs"
 					class="whitespace-nowrap"
-					:label="row.triageStatus === 'needs-triage' ? 'Needs Triage' : 'Waiting'"
+					:label="
+						row.triageStatus === 'needs-triage'
+							? 'Needs Triage'
+							: row.triageStatus === 'post-hackweek'
+								? 'Post Hackweek'
+								: row.triageStatus === 'waiting'
+									? 'Waiting'
+									: 'No Status'
+					"
 					:color="row.triageStatus === 'needs-triage' ? 'pink' : 'purple'"
 					:variant="row.triageStatus === 'needs-triage' ? 'solid' : 'soft'"
 				/>

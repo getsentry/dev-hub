@@ -15,7 +15,7 @@ export type Issue = {
 	assignees: User[];
 	updatedAt: Date;
 	timeLeft: string;
-	triageStatus: "needs-triage" | "waiting" | "no-status";
+	triageStatus: "needs-triage" | "waiting" | "post-hackweek" | "no-status";
 };
 
 export type Comment = {
@@ -92,7 +92,9 @@ export const transformIssueData = (gitHubIssues: GitHubIssue[]): Issue[] => {
 				? "needs-triage"
 				: issue.labels.some((label) => label.name === LABEL_WAITING_FOR_COMMUNITY)
 					? "waiting"
-					: "no-status"
+					: issue.labels.some((label) => label.name === LABEL_POST_HACKWEEK)
+						? "post-hackweek"
+						: "no-status"
 		}));
 };
 
