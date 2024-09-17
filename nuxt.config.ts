@@ -10,7 +10,12 @@ export default defineNuxtConfig({
 		// server-side
 		gitHubToken: process.env.GITHUB_TOKEN,
 		// client-side
-		public: { gitHubToken: process.env.GITHUB_TOKEN }
+		public: {
+			gitHubToken: process.env.GITHUB_TOKEN,
+			sentry: {
+				dsn: process.env.SENTRY_DSN
+			}
+		}
 	},
 	sentry: {
 		sourceMapsUploadOptions: {
